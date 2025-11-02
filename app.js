@@ -6,10 +6,8 @@ const connectDB = require('./config/database');
 const startServer = async () => {
   const app = express();
   
-  // Connect to database without blocking server start
-  connectDB().catch(err => {
-    console.error('❌ Database connection failed:', err.message);
-  });
+  // Connect to database first
+  await connectDB();
 
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: false, limit: '10mb' }));

@@ -38,8 +38,14 @@ exports.register = async (req, res, next) => {
   try {
     const { name, email, password, age, weight, height, gender, fitnessGoals } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    // Check if user already exists with timeout
+    const existingUser = await Promise.race([
+      User.findOne({ email }).lean(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database timeout')), 10000)
+      )
+    ]);
+    
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -48,16 +54,21 @@ exports.register = async (req, res, next) => {
     }
 
     // Create user with timeout
-    const user = await User.create({
-      name,
-      email,
-      password,
-      age,
-      weight,
-      height,
-      gender,
-      fitnessGoals
-    });
+    const user = await Promise.race([
+      User.create({
+        name,
+        email,
+        password,
+        age,
+        weight,
+        height,
+        gender,
+        fitnessGoals
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('User creation timeout')), 15000)
+      )
+    ]);
 
     sendTokenResponse(user, 201, res);
   } catch (error) {

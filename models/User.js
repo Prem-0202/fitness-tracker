@@ -53,6 +53,9 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Create index for faster email lookups
+userSchema.index({ email: 1 });
+
 // Encrypt password using bcrypt
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) {
@@ -60,7 +63,7 @@ userSchema.pre('save', async function(next) {
   }
   
   try {
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(8); // Reduced from 10 to 8 for faster hashing
     this.password = await bcrypt.hash(this.password, salt);
     next();
   } catch (error) {
