@@ -4,13 +4,31 @@ const cors = require('cors');
 const connectDB = require('./config/database');
 
 const startServer = async () => {
-  await connectDB();
+  try {
+    await connectDB();
+    console.log('✅ Database connected, starting server...');
+  } catch (error) {
+    console.error('❌ Database connection failed:', error.message);
+    process.exit(1);
+  }
 
   const app = express();
 
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: false, limit: '10mb' }));
   app.use(cors());
+
+  // Database connection check middleware
+  app.use((req, res, next) => {
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database connection unavailable'
+      });
+    }
+    next();
+  });
 
   app.use('/api/auth', require('./routes/auth'));
   app.use('/api/users', require('./routes/users'));

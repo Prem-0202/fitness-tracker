@@ -1,14 +1,21 @@
 const mongoose = require('mongoose');
 
+// Configure mongoose for production
+mongoose.set('bufferCommands', false);
+
 const connectDB = async () => {
   try {
     console.log('🔄 Connecting to MongoDB Atlas...');
     
-    mongoose.set('bufferCommands', true);
-    
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000,
-      connectTimeoutMS: 5000
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 30000,
+      maxPoolSize: 10,
+      minPoolSize: 5,
+      maxIdleTimeMS: 30000,
+      retryWrites: true,
+      w: 'majority'
     });
 
     console.log(`✅ MongoDB Connected Successfully!`);

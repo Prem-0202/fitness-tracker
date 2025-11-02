@@ -1,7 +1,9 @@
 {
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "build": "echo 'Build complete'",
+    "test": "node test-registration.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
