@@ -38,8 +38,8 @@ exports.register = async (req, res, next) => {
   try {
     const { name, email, password, age, weight, height, gender, fitnessGoals } = req.body;
 
-    // Check if user already exists with timeout
-    const existingUser = await User.findOne({ email }).maxTimeMS(10000);
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -103,7 +103,7 @@ exports.login = async (req, res, next) => {
     }
 
     // Check for user (include password for verification)
-    const user = await User.findOne({ email }).select('+password').maxTimeMS(10000);
+    const user = await User.findOne({ email }).select('+password');
 
     if (!user) {
       return res.status(401).json({

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 // Configure mongoose for production
-mongoose.set('bufferCommands', false);
+mongoose.set('bufferCommands', true);
 
 const connectDB = async () => {
   try {
