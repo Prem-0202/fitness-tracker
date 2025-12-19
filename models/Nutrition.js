@@ -9,7 +9,7 @@ const nutritionSchema = new mongoose.Schema({
   mealType: {
     type: String,
     required: [true, 'Please add meal type'],
-    enum: ['breakfast', 'lunch', 'dinner', 'snack']
+    enum: ['breakfast', 'lunch', 'dinner', 'snacks']
   },
   foodItems: [{
     name: {

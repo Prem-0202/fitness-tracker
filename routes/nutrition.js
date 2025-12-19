@@ -2,7 +2,8 @@ const express = require('express');
 const {
   getNutritionEntries,
   createNutritionEntry,
-  getNutritionStats
+  getDailyNutrition,
+  addFoodItem
 } = require('../controllers/nutritionController');
 const { protect } = require('../middleware/auth');
 
@@ -14,6 +15,7 @@ router.route('/')
   .get(getNutritionEntries)
   .post(createNutritionEntry);
 
-router.get('/stats/nutrition', getNutritionStats);
+router.get('/daily', getDailyNutrition);
+router.post('/food', addFoodItem);
 
 module.exports = router;

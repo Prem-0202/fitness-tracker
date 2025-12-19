@@ -19,6 +19,7 @@ const startServer = async () => {
   app.use('/api/users', require('./routes/users'));
   app.use('/api/workouts', require('./routes/workouts'));
   app.use('/api/nutrition', require('./routes/nutrition'));
+  app.use('/api/hydration', require('./routes/hydration'));
   app.use('/api/progress', require('./routes/progress'));
 
   app.get('/', (req, res) => {

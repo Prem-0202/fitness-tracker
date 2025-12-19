@@ -48,6 +48,14 @@ const userSchema = new mongoose.Schema({
   dailyCalorieTarget: {
     type: Number,
     default: 2000
+  },
+  dailyProteinTarget: {
+    type: Number,
+    default: 50
+  },
+  dailyCarbsTarget: {
+    type: Number,
+    default: 250
   }
 }, {
   timestamps: true

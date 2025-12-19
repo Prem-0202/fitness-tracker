@@ -1,4 +1,5 @@
 const Nutrition = require('../models/Nutrition');
+const User = require('../models/User');
 
 // @desc    Get all nutrition entries for user
 // @route   GET /api/nutrition
@@ -41,58 +42,95 @@ exports.createNutritionEntry = async (req, res, next) => {
   }
 };
 
-// @desc    Get nutrition statistics
-// @route   GET /api/nutrition/stats
+// @desc    Get daily nutrition summary
+// @route   GET /api/nutrition/daily
 // @access  Private
-exports.getNutritionStats = async (req, res, next) => {
+exports.getDailyNutrition = async (req, res, next) => {
   try {
-    const { startDate, endDate } = req.query;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
-    let matchCriteria = { user: req.user._id };
-    
-    if (startDate && endDate) {
-      matchCriteria.date = {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate)
-      };
-    }
+    const user = await User.findById(req.user.id);
+    const nutrition = await Nutrition.find({
+      user: req.user.id,
+      date: { $gte: today, $lt: tomorrow }
+    });
 
-    const stats = await Nutrition.aggregate([
-      {
-        $match: matchCriteria
-      },
-      {
-        $group: {
-          _id: null,
-          totalEntries: { $sum: 1 },
-          totalCalories: { $sum: '$totalCalories' },
-          avgCalories: { $avg: '$totalCalories' },
-          totalProtein: { $sum: '$totalProtein' },
-          totalCarbs: { $sum: '$totalCarbs' },
-          totalFat: { $sum: '$totalFat' }
-        }
-      }
-    ]);
+    const mealsByType = {
+      breakfast: [],
+      lunch: [],
+      dinner: [],
+      snacks: []
+    };
 
-    const mealTypeStats = await Nutrition.aggregate([
-      {
-        $match: matchCriteria
-      },
-      {
-        $group: {
-          _id: '$mealType',
-          count: { $sum: 1 },
-          totalCalories: { $sum: '$totalCalories' }
-        }
-      }
-    ]);
+    let totalCalories = 0;
+    let totalProtein = 0;
+    let totalCarbs = 0;
+
+    nutrition.forEach(meal => {
+      mealsByType[meal.mealType].push(meal);
+      totalCalories += meal.totalCalories;
+      totalProtein += meal.totalProtein;
+      totalCarbs += meal.totalCarbs;
+    });
 
     res.status(200).json({
       success: true,
       data: {
-        overview: stats[0] || {},
-        byMealType: mealTypeStats
+        meals: mealsByType,
+        totals: {
+          calories: totalCalories,
+          protein: totalProtein,
+          carbs: totalCarbs
+        },
+        goals: {
+          calories: user.dailyCalorieTarget,
+          protein: user.dailyProteinTarget,
+          carbs: user.dailyCarbsTarget
+        }
       }
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Add food item to meal
+// @route   POST /api/nutrition/food
+// @access  Private
+exports.addFoodItem = async (req, res, next) => {
+  try {
+    const { mealType, name, calories, protein = 0, carbs = 0 } = req.body;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    let nutrition = await Nutrition.findOne({
+      user: req.user.id,
+      mealType,
+      date: { $gte: today, $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000) }
+    });
+
+    if (nutrition) {
+      nutrition.foodItems.push({ name, calories, protein, carbs, quantity: 1 });
+      await nutrition.save();
+    } else {
+      nutrition = await Nutrition.create({
+        user: req.user.id,
+        mealType,
+        foodItems: [{ name, calories, protein, carbs, quantity: 1 }],
+        totalCalories: calories
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      data: nutrition
     });
   } catch (error) {
     res.status(400).json({
