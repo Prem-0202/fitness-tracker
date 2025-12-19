@@ -42,7 +42,7 @@ const userSchema = new mongoose.Schema({
   },
   fitnessGoals: {
     type: String,
-    enum: ['weight_loss', 'muscle_gain', 'maintenance', 'endurance'],
+    enum: ['weight_loss', 'muscle_gain', 'maintenance', 'endurance', 'weight_gain'],
     default: 'maintenance'
   },
   dailyCalorieTarget: {
