@@ -7,10 +7,10 @@ const { protect } = require('../middleware/auth');
 router.use(protect);
 
 // POST /api/hydration - Add hydration entry
-router.post('/', addHydration);
+router.post('/addhydra', addHydration);
 
 // GET /api/hydration - Get hydration data
-router.get('/', getHydration);
+router.get('/gethydra', getHydration);
 
 // PUT /api/hydration/:id - Update hydration entry
 router.put('/:id', updateHydration);
