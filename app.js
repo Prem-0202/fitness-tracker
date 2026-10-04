@@ -5,9 +5,13 @@ const connectDB = require('./config/database');
 
 const startServer = async () => {
   const app = express();
-  
-  // Connect to database first
-  await connectDB();
+
+  // Connect to database first - exit if connection fails
+  const conn = await connectDB();
+  if (!conn) {
+    console.error('❌ Could not connect to database. Exiting...');
+    process.exit(1);
+  }
 
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: false, limit: '10mb' }));
