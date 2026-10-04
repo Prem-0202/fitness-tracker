@@ -2,6 +2,7 @@
 
 // Configure mongoose for production
 mongoose.set('bufferCommands', false);
+mongoose.set('debug', false);
 
 const connectDB = async () => {
   try {
