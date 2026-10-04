@@ -23,9 +23,6 @@ const connectDB = async () => {
       maxIdleTimeMS: 30000,
       retryWrites: true,
       w: 'majority',
-      tls: true,
-      tlsAllowInvalidCertificates: true,
-      tlsAllowInvalidHostnames: true,
     });
 
     console.log('MongoDB Connected Successfully!');

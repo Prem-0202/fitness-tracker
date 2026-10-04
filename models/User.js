@@ -61,8 +61,6 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Create index for faster email lookups
-userSchema.index({ email: 1 });
 
 // Encrypt password using bcrypt
 userSchema.pre('save', async function(next) {
