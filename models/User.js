@@ -19,9 +19,21 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, 'Please add a password'],
     minlength: 6,
     select: false
+  },
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true  // allows multiple null values
+  },
+  authProvider: {
+    type: String,
+    enum: ['local', 'google'],
+    default: 'local'
+  },
+  avatar: {
+    type: String  // Google profile picture URL
   },
   age: {
     type: Number,
@@ -62,14 +74,14 @@ const userSchema = new mongoose.Schema({
 });
 
 
-// Encrypt password using bcrypt
+// Encrypt password using bcrypt (only for local auth users)
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) {
+  if (!this.isModified('password') || !this.password) {
     return next();
   }
   
   try {
-    const salt = await bcrypt.genSalt(8); // Reduced from 10 to 8 for faster hashing
+    const salt = await bcrypt.genSalt(8);
     this.password = await bcrypt.hash(this.password, salt);
     next();
   } catch (error) {

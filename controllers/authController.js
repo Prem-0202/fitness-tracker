@@ -1,5 +1,8 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Generate JWT Token
 const sendTokenResponse = (user, statusCode, res) => {
@@ -140,3 +143,74 @@ exports.getMe = async (req, res, next) => {
     });
   }
 };
+
+// @desc    Google OAuth - verify ID token and create/login user
+// @route   POST /api/auth/google
+// @access  Public
+exports.googleAuth = async (req, res, next) => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google ID token is required'
+      });
+    }
+
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      return res.status(500).json({
+        success: false,
+        message: 'Google OAuth is not configured on the server'
+      });
+    }
+
+    // Verify the Google ID token
+    let ticket;
+    try {
+      ticket = await googleClient.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID
+      });
+    } catch (verifyError) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired Google token'
+      });
+    }
+
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name, picture: avatar } = payload;
+
+    // Check if user already exists (by googleId or email)
+    let user = await User.findOne({ $or: [{ googleId }, { email }] });
+
+    if (user) {
+      // If user registered with email/password, link their Google account
+      if (!user.googleId) {
+        user.googleId = googleId;
+        user.authProvider = 'google';
+        if (avatar && !user.avatar) user.avatar = avatar;
+        await user.save();
+      }
+    } else {
+      // Create a new user from Google profile
+      user = await User.create({
+        name,
+        email,
+        googleId,
+        avatar,
+        authProvider: 'google'
+        // no password — Google users don't have one
+      });
+    }
+
+    sendTokenResponse(user, 200, res);
+  } catch (error) {
+    console.error('Google auth error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Google authentication failed'
+    });
+  }
+};

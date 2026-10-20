@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const connectDB = require('./config/database');
 
 const startServer = async () => {
@@ -17,6 +18,9 @@ const startServer = async () => {
   app.use(express.urlencoded({ extended: false, limit: '10mb' }));
   app.use(cors());
 
+  // Serve frontend static files from /public
+  app.use(express.static(path.join(__dirname, 'public')));
+
 
 
   app.use('/api/auth', require('./routes/auth'));
@@ -26,13 +30,6 @@ const startServer = async () => {
   app.use('/api/hydration', require('./routes/hydration'));
   app.use('/api/progress', require('./routes/progress'));
 
-  app.get('/', (req, res) => {
-    res.json({ 
-      message: 'Fitness Tracker API', 
-      version: '1.0.0',
-      status: 'Running'
-    });
-  });
 
   app.get('/health', (req, res) => {
     const mongoose = require('mongoose');
@@ -46,11 +43,15 @@ const startServer = async () => {
     });
   });
 
-  app.use((req, res) => {
-    res.status(404).json({
-      success: false,
-      message: `Route ${req.method} ${req.originalUrl} not found`
-    });
+  // Catch-all: serve frontend index.html for non-API routes
+  app.use((req, res, next) => {
+    if (req.originalUrl.startsWith('/api')) {
+      return res.status(404).json({
+        success: false,
+        message: `Route ${req.method} ${req.originalUrl} not found`
+      });
+    }
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
   });
 
   app.use((error, req, res, next) => {
